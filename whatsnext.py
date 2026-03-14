@@ -15,9 +15,9 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timezone, timedelta
 
-from AppKit import NSAttributedString, NSFont, NSFontAttributeName, NSForegroundColorAttributeName
-from AppKit import NSColor
-from Foundation import NSDictionary
+from AppKit import (NSAttributedString, NSFont, NSFontAttributeName, NSForegroundColorAttributeName,
+                     NSColor, NSImage, NSApplication)
+from Foundation import NSDictionary, NSSize
 
 # Google OAuth credentials
 CLIENT_ID = "REMOVED_SECRET"
@@ -301,22 +301,41 @@ class WhatsNextApp(rumps.App):
             self._set_title("Error")
 
     def _set_title(self, text, color=None):
-        """Set menu bar title with optional color."""
+        """Set menu bar title with optional color, and tint the icon to match."""
         try:
-            from AppKit import NSApplication
             nsstatusitem = NSApplication.sharedApplication().delegate().nsstatusitem
+            button = nsstatusitem.button()
+
+            # Set text
             font = NSFont.menuBarFontOfSize_(0)
             attrs = {NSFontAttributeName: font}
             if color:
                 attrs[NSForegroundColorAttributeName] = color
             attributed = NSAttributedString.alloc().initWithString_attributes_(text, attrs)
-            button = nsstatusitem.button()
             if button:
                 button.setAttributedTitle_(attributed)
             else:
                 nsstatusitem.setAttributedTitle_(attributed)
-            # Prevent rumps from overwriting with plain title
-            self._nsapp_set = True
+
+            # Tint the icon
+            if button:
+                icon_path = get_icon_path()
+                original = NSImage.alloc().initByReferencingFile_(icon_path)
+                if color:
+                    # Create a tinted copy
+                    tinted = NSImage.alloc().initWithSize_(original.size())
+                    tinted.lockFocus()
+                    original.drawAtPoint_fromRect_operation_fraction_(
+                        (0, 0), ((0, 0), original.size()), 1, 1)  # NSCompositeSourceOver
+                    color.set()
+                    from AppKit import NSRectFillUsingOperation
+                    NSRectFillUsingOperation(((0, 0), original.size()), 3)  # NSCompositeSourceIn
+                    tinted.unlockFocus()
+                    tinted.setTemplate_(False)
+                    nsstatusitem.setImage_(tinted)
+                else:
+                    original.setTemplate_(True)
+                    nsstatusitem.setImage_(original)
         except Exception as e:
             # Falls back to plain title (e.g. during init before NSApp exists)
             rumps.App.title.fset(self, text)
