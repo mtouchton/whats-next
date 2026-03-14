@@ -1,7 +1,7 @@
 from setuptools import setup
 
 APP = ['whatsnext.py']
-DATA_FILES = []
+DATA_FILES = ['icon.png']
 OPTIONS = {
     'argv_emulation': False,
     'plist': {
