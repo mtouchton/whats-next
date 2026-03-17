@@ -19,9 +19,9 @@ from AppKit import (NSAttributedString, NSFont, NSFontAttributeName, NSForegroun
                      NSColor, NSImage, NSApplication)
 from Foundation import NSDictionary, NSSize
 
-# Google OAuth credentials
-CLIENT_ID = "REMOVED_SECRET"
-CLIENT_SECRET = "REMOVED_SECRET"
+# Google OAuth credentials — load from environment variables
+CLIENT_ID = os.environ.get("WHATSNEXT_CLIENT_ID", "")
+CLIENT_SECRET = os.environ.get("WHATSNEXT_CLIENT_SECRET", "")
 REDIRECT_URI = "http://localhost:8777/callback"
 SCOPES = "https://www.googleapis.com/auth/calendar.readonly"
 KEYRING_SERVICE = "whatsnext"
